@@ -1,14 +1,25 @@
 package com.example.wirtualnaszafa.ui.randomize;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.wirtualnaszafa.ClientDB;
+import com.example.wirtualnaszafa.MainActivityViewModel;
 import com.example.wirtualnaszafa.R;
+import com.example.wirtualnaszafa.WardrobeDB;
+import com.example.wirtualnaszafa.databinding.FragmentRandomizeBinding;
+import com.example.wirtualnaszafa.model.Suite;
+import com.squareup.picasso.Picasso;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -21,6 +32,10 @@ public class RandomizeFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    private RandomizeViewModel viewModel;
+
+    private FragmentRandomizeBinding binding;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -61,6 +76,57 @@ public class RandomizeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_collections, container, false);
+        binding = FragmentRandomizeBinding.inflate(getLayoutInflater(), container, false);
+        viewModel = new ViewModelProvider(this).get(RandomizeViewModel.class);
+        viewModel.setDb(
+                ClientDB.getInstance(getContext())
+                        .getAppDatabase()
+                        .wardrobeDAO()
+        ).observe(getViewLifecycleOwner(), suites -> {
+            refresh(suites);
+        });
+        ;
+
+        binding.swipeRefreshLayout.setOnRefreshListener(() -> {
+            refresh(viewModel.suitesLiveData.getValue());
+        });
+        return binding.getRoot();
+    }
+
+    private void refresh(List<WardrobeDB> suites) {
+        if(suites == null) return;
+        Collections.shuffle(suites);
+
+        if (suites.size() > 0) {
+            WardrobeDB first = suites.get(0);
+
+            Picasso.get().load(first.getPath()).placeholder(R.drawable.ic_hanger).into(binding.firstSuiteImage);
+            binding.firstSuiteName.setText(first.getTag());
+            binding.firstSuiteDescription.setText(first.getColor());
+        } else {
+            binding.firstSuite.setVisibility(View.GONE);
+        }
+
+        if (suites.size() > 1) {
+            WardrobeDB second = suites.get(1);
+
+            Picasso.get().load(second.getPath()).placeholder(R.drawable.ic_hanger).into(binding.secondSuiteImage);
+            binding.secondSuiteName.setText(second.getTag());
+            binding.secondSuiteDescription.setText(second.getColor());
+        } else {
+            binding.secondSuite.setVisibility(View.GONE);
+        }
+
+        if (suites.size() > 2) {
+            WardrobeDB third = suites.get(2);
+
+            Picasso.get().load(third.getPath()).placeholder(R.drawable.ic_hanger).into(binding.thirdSuiteImage);
+            binding.thirdSuiteName.setText(third.getTag());
+            binding.thirdSuiteDescription.setText(third.getColor());
+        } else {
+            binding.thirdSuite.setVisibility(View.GONE);
+        }
+
+        binding.swipeRefreshLayout.setRefreshing(false);
     }
 }

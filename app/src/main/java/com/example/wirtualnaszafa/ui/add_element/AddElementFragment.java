@@ -81,35 +81,12 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
 
         addElementViewModel = new ViewModelProvider(this).get(AddElementViewModel.class);
 
-        addElementViewModel.getRequestResult().observe(getViewLifecycleOwner(), suite -> {
-            if(suite == null) return;
-            class SaveTask extends AsyncTask<Void, Void, Void> {
-
-                @Override
-                protected Void doInBackground(Void... voids) {
-                    //adding new clothing
-                    WardrobeDB task = new WardrobeDB();
-                    task.setPath(suite.imagePath);
-                    task.setTag(suite.name);
-                    task.setColor(suite.description);
-
-                    //adding to database
-                    ClientDB.getInstance(getContext()).getAppDatabase()
-                            .wardrobeDAO()
-                            .insert(task);
-                    return null;
-                }
-
-                @Override
-                protected void onPostExecute(Void aVoid) {
-                    super.onPostExecute(aVoid);
-                    getActivity().finish();
-                    startActivity(new Intent(getContext(), MainActivity.class));
-                    Toast.makeText(getContext(), "Zapisano", Toast.LENGTH_SHORT).show();
-                }
+        addElementViewModel.getRequestResult().observe(getViewLifecycleOwner(), result -> {
+            if (result != null && result) {
+                getActivity().finish();
+                startActivity(new Intent(getContext(), MainActivity.class));
+                Toast.makeText(getContext(), "Zapisano", Toast.LENGTH_SHORT).show();
             }
-            SaveTask st = new SaveTask();
-            st.execute();
         });
 
         addElementViewModel.getLoading().observe(getViewLifecycleOwner(), result -> {
@@ -164,8 +141,33 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
                     }
                     else{
                         //may not be needed anymore
-//                        String picture = saveToInternalStorage(((BitmapDrawable)imageView.getDrawable()).getBitmap());
-//                        System.out.println("SHOW MY DIR: " + picture);
+                        String picture = saveToInternalStorage(((BitmapDrawable)imageView.getDrawable()).getBitmap());
+                        System.out.println("SHOW MY DIR: " + picture);
+
+                        class SaveTask extends AsyncTask<Void, Void, Void> {
+
+                            @Override
+                            protected Void doInBackground(Void... voids) {
+                                //adding new clothing
+                                WardrobeDB task = new WardrobeDB();
+                                task.setPath(picture);
+                                task.setTag(tag_editT.getText().toString());
+                                task.setColor(color_editT.getText().toString());
+
+                                //adding to database
+                                ClientDB.getInstance(getContext()).getAppDatabase()
+                                        .wardrobeDAO()
+                                        .insert(task);
+                                return null;
+                            }
+
+                            @Override
+                            protected void onPostExecute(Void aVoid) {
+                                super.onPostExecute(aVoid);
+                            }
+                        }
+                        SaveTask st = new SaveTask();
+                        st.execute();
 
                         String token = requireContext().getSharedPreferences(ACCOUNT_PREFERENCES_KEY, Context.MODE_PRIVATE).getString(TOKEN_KEY, null);
                         addElementViewModel.sendNewSuite(token, tag_editT.getText().toString(), color_editT.getText().toString(), imageUri);
@@ -181,7 +183,7 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
 
         File directory = cw.getDir(randomString(20), Context.MODE_PRIVATE);
         // Create imageDir
-        File mypath = new File(directory,"profile.jpg");
+        File mypath = new File(directory,"profile" + System.currentTimeMillis() + ".jpg");
 
         FileOutputStream fos = null;
         try{
@@ -198,7 +200,7 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
                 e.printStackTrace();
             }
         }
-        return directory.getAbsolutePath();
+        return Uri.fromFile(mypath).toString();
     }
 
     boolean isEmpty(EditText text) {

@@ -18,6 +18,7 @@ import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -89,7 +90,7 @@ public class RemoteService {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Observable<Suite> newSuite(String token, String name, String description, Uri imageUri) {
+    public Observable<Response<Void>> newSuite(String token, String name, String description, Uri imageUri) {
         File file = new File(imageUri.getPath());
 
         MultipartBody.Part filePart = MultipartBody.Part.createFormData("image", file.getName(), RequestBody.create(file, MediaType.parse("image/*")));
@@ -123,6 +124,6 @@ public class RemoteService {
         @Multipart
         @Headers("Accept: application/json")
         @POST("suite/new/")
-        Observable<Suite> newSuite(@Header("Authorization") String token, @Query("name") String name, @Query("description")String description, @Part MultipartBody.Part image);
+        Observable<Response<Void>> newSuite(@Header("Authorization") String token, @Query("name") String name, @Query("description")String description, @Part MultipartBody.Part image);
     }
 }

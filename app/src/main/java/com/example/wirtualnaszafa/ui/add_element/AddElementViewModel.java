@@ -17,8 +17,8 @@ public class AddElementViewModel extends ViewModel {
     private final RemoteService remoteService = new RemoteService();
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    private final MutableLiveData<Suite> requestResult = new MutableLiveData<>(null);
-    public LiveData<Suite> getRequestResult() { return requestResult; }
+    private final MutableLiveData<Boolean> requestResult = new MutableLiveData<>(null);
+    public LiveData<Boolean> getRequestResult() { return requestResult; }
 
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
     public LiveData<Boolean> getLoading() { return loading; }
@@ -29,10 +29,13 @@ public class AddElementViewModel extends ViewModel {
                 .doOnTerminate(() -> loading.postValue(false))
                 .subscribe(result -> {
                     if(result != null) {
-                        requestResult.postValue(result);
+                        requestResult.postValue(true);
+                    }
+                    else {
+                        requestResult.postValue(false);
                     }
                 }, throwable -> {
-                    requestResult.postValue(null);
+                    requestResult.postValue(false);
                 });
 
         compositeDisposable.add(request);

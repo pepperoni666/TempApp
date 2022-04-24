@@ -1,6 +1,10 @@
 package com.example.wirtualnaszafa;
 
+import static com.example.wirtualnaszafa.Constants.ACCOUNT_PREFERENCES_KEY;
+import static com.example.wirtualnaszafa.Constants.TOKEN_KEY;
+
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,6 +16,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -24,6 +30,8 @@ import com.google.android.material.snackbar.Snackbar;
 public class MainActivity extends AppCompatActivity{
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+
+    private MainActivityViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -47,8 +55,8 @@ public class MainActivity extends AppCompatActivity{
         binding.appBarMain.fab.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Snackbar.make(view, "Work in progress", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                String token = getSharedPreferences(ACCOUNT_PREFERENCES_KEY, Context.MODE_PRIVATE).getString(TOKEN_KEY, null);
+                viewModel.fetchAll(token);
             }
         });
 
@@ -65,6 +73,16 @@ public class MainActivity extends AppCompatActivity{
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        viewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        viewModel.db =ClientDB
+                .getInstance(this)
+                .getAppDatabase()
+                .wardrobeDAO();
+
+        viewModel.getLoading().observe(this, isLoading -> {
+            //TODO
+        });
     }
 
     @Override

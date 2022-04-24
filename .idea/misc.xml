@@ -48,6 +48,8 @@
         <entry key="..\:/Users/eknam/Desktop/git-repo/android-projects/WirtualnaSzafa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.106" />
         <entry key="..\:/Users/eknam/Desktop/git-repo/android-projects/WirtualnaSzafa/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_account.xml" value="0.19610507246376813" />
+        <entry key="app/src/main/res/layout/fragment_add_element.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/fragment_gallery_scroll.xml" value="0.1099290780141844" />
       </map>
     </option>
   </component>

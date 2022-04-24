@@ -6,24 +6,24 @@ import java.util.List;
 
 public class Suite {
     @SerializedName("id")
-    int id;
+    public int id;
     @SerializedName("user_id")
-    String userId;
+    public String userId;
     @SerializedName("name")
-    String name;
+    public String name;
     @SerializedName("description")
-    String description;
+    public String description;
     @SerializedName("image_path")
-    String imagePath;
+    public String imagePath;
     @SerializedName("target_image_path")
-    String targetImagePath;
+    public String targetImagePath;
     @SerializedName("token")
-    String token;
+    public String token;
     @SerializedName("created_at")
-    String createdAt;
+    public String createdAt;
     @SerializedName("updated_at")
-    String updatedAt;
+    public String updatedAt;
     @SerializedName("tags")
-    List<SuiteTag> tags;
+    public List<SuiteTag> tags;
 }
 

@@ -4,23 +4,23 @@ import com.google.gson.annotations.SerializedName;
 
 public class User {
     @SerializedName("id")
-    int id;
+    public int id;
     @SerializedName("name")
-    String name;
+    public String name;
     @SerializedName("email")
-    String email;
+    public String email;
     @SerializedName("email_verified_at")
-    String emailVerifiedAt;
+    public String emailVerifiedAt;
     @SerializedName("two_factor_confirmed_at")
-    String twoFactorConfirmedAt;
+    public String twoFactorConfirmedAt;
     @SerializedName("current_team_id")
-    String currentTeamId;
+    public String currentTeamId;
     @SerializedName("profile_photo_path")
-    String profilePhotoPath;
+    public String profilePhotoPath;
     @SerializedName("created_at")
-    String createdAt;
+    public String createdAt;
     @SerializedName("updated_at")
-    String updatedAt;
+    public String updatedAt;
     @SerializedName("profile_photo_url")
-    String profilePhotoUrl;
+    public String profilePhotoUrl;
 }

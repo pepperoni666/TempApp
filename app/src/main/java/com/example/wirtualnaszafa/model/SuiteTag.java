@@ -4,18 +4,18 @@ import com.google.gson.annotations.SerializedName;
 
 public class SuiteTag {
     @SerializedName("id")
-    int id;
+    public int id;
     @SerializedName("name")
-    String name;
+    public String name;
     @SerializedName("description")
-    String description;
+    public String description;
     @SerializedName("token")
-    String token;
+    public String token;
     @SerializedName("created_at")
-    String createdAt;
+    public String createdAt;
     @SerializedName("updated_at")
-    String updatedAt;
+    public String updatedAt;
     @SerializedName("pivot")
-    Pivot pivot;
+    public Pivot pivot;
 }
 

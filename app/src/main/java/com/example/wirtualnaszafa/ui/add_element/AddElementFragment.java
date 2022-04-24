@@ -1,5 +1,8 @@
 package com.example.wirtualnaszafa.ui.add_element;
 
+import static com.example.wirtualnaszafa.Constants.ACCOUNT_PREFERENCES_KEY;
+import static com.example.wirtualnaszafa.Constants.TOKEN_KEY;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -12,6 +15,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -20,17 +24,20 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.wirtualnaszafa.ClientDB;
 import com.example.wirtualnaszafa.MainActivity;
 import com.example.wirtualnaszafa.R;
 import com.example.wirtualnaszafa.WardrobeDB;
+import com.example.wirtualnaszafa.model.Suite;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,11 +50,15 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
     Button button_gallery, button_camera, button_save;
     EditText tag_editT, color_editT;
     private ImageView imageView;
+    private ProgressBar loading;
     public static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 101;
     public static final int RESULT_CANCELED = 0;
     public static final int RESULT_OK = -1;
+    private Uri imageUri;
     static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     static SecureRandom rnd = new SecureRandom();
+
+    private AddElementViewModel addElementViewModel;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -60,12 +71,53 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
 
         tag_editT = rootView.findViewById(R.id.editText_tag_photo);
         color_editT = rootView.findViewById(R.id.editText_color_photo);
+        loading = rootView.findViewById(R.id.loading);
 
         button_gallery.setOnClickListener(this);
         button_camera.setOnClickListener(this);
         button_save.setOnClickListener(this);
 
         imageView = rootView.findViewById(R.id.imageView_add_photo);
+
+        addElementViewModel = new ViewModelProvider(this).get(AddElementViewModel.class);
+
+        addElementViewModel.getRequestResult().observe(getViewLifecycleOwner(), suite -> {
+            if(suite == null) return;
+            class SaveTask extends AsyncTask<Void, Void, Void> {
+
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    //adding new clothing
+                    WardrobeDB task = new WardrobeDB();
+                    task.setPath(suite.imagePath);
+                    task.setTag(suite.name);
+                    task.setColor(suite.description);
+
+                    //adding to database
+                    ClientDB.getInstance(getContext()).getAppDatabase()
+                            .wardrobeDAO()
+                            .insert(task);
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    getActivity().finish();
+                    startActivity(new Intent(getContext(), MainActivity.class));
+                    Toast.makeText(getContext(), "Zapisano", Toast.LENGTH_SHORT).show();
+                }
+            }
+            SaveTask st = new SaveTask();
+            st.execute();
+        });
+
+        addElementViewModel.getLoading().observe(getViewLifecycleOwner(), result -> {
+            loading.setVisibility(result ? View.VISIBLE : View.GONE);
+            button_gallery.setEnabled(!result);
+            button_camera.setEnabled(!result);
+            button_save.setEnabled(!result);
+        });
 
         return rootView;
     }
@@ -82,9 +134,24 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
                     startActivityForResult(pickPhoto, 1);
                     break;
                 case R.id.button_add_from_camera:
-                    //open camera and snap the photo
-                    Intent takePicture = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(takePicture, 0);
+                    try {
+                        //open camera and snap the photo
+                        String imageFileName = "JPEG_" + System.currentTimeMillis(); //make a better file name
+                        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                        File image = File.createTempFile(imageFileName,
+                                ".jpg",
+                                storageDir
+                        );
+
+                        imageUri = Uri.fromFile(image);
+                        Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                        Intent takePicture = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(takePicture, 0);
+                    }
+                    catch (Exception e){
+                        Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                     break;
                 case R.id.button_save_photo:
                     //save picked photo to internal memory of app and/or use API
@@ -92,40 +159,16 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
                     System.out.println(tag_editT.getText());
                     System.out.println(color_editT.getText()); //.toString());
 
-                    if(isEmpty(tag_editT) || isEmpty(color_editT)){  // uwzględnić kategorie tagów?
+                    if(isEmpty(tag_editT) || isEmpty(color_editT) || imageUri == null){  // uwzględnić kategorie tagów?
                         Toast.makeText(v.getContext(), "Pola tag i kolor muszą być wypełnione", Toast.LENGTH_SHORT).show();
                     }
                     else{
-                        String picture = saveToInternalStorage(((BitmapDrawable)imageView.getDrawable()).getBitmap());
-                        System.out.println("SHOW MY DIR: " + picture);
+                        //may not be needed anymore
+//                        String picture = saveToInternalStorage(((BitmapDrawable)imageView.getDrawable()).getBitmap());
+//                        System.out.println("SHOW MY DIR: " + picture);
 
-                        class SaveTask extends AsyncTask<Void, Void, Void> {
-
-                            @Override
-                            protected Void doInBackground(Void... voids) {
-                                //adding new clothing
-                                WardrobeDB task = new WardrobeDB();
-                                task.setPath(picture);
-                                task.setTag(tag_editT.getText().toString());
-                                task.setColor(color_editT.getText().toString());
-
-                                //adding to database
-                                ClientDB.getInstance(getContext()).getAppDatabase()
-                                        .wardrobeDAO()
-                                        .insert(task);
-                                return null;
-                            }
-
-                            @Override
-                            protected void onPostExecute(Void aVoid) {
-                                super.onPostExecute(aVoid);
-                                getActivity().finish();
-                                startActivity(new Intent(getContext(), MainActivity.class));
-                                Toast.makeText(v.getContext(), "Zapisano", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                        SaveTask st = new SaveTask();
-                        st.execute();
+                        String token = requireContext().getSharedPreferences(ACCOUNT_PREFERENCES_KEY, Context.MODE_PRIVATE).getString(TOKEN_KEY, null);
+                        addElementViewModel.sendNewSuite(token, tag_editT.getText().toString(), color_editT.getText().toString(), imageUri);
                     }
                     break;
             }
@@ -232,6 +275,8 @@ public class AddElementFragment extends Fragment implements View.OnClickListener
                     //gallery
                     if (resultCode == RESULT_OK && data != null){
                         Uri selectedImage = data.getData();
+
+                        imageUri = selectedImage;
 
                         Bitmap bitmap = null;
                         try {

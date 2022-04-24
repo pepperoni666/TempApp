@@ -122,7 +122,7 @@ public class RemoteService {
 
         @Multipart
         @Headers("Accept: application/json")
-        @POST("suite/new")
+        @POST("suite/new/")
         Observable<Suite> newSuite(@Header("Authorization") String token, @Query("name") String name, @Query("description")String description, @Part MultipartBody.Part image);
     }
 }
